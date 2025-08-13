@@ -1,8 +1,8 @@
 # Uncomment the following imports before adding the Model code
 
-# from django.db import models
-# from django.utils.timezone import now
-# from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+from django.utils.timezone import now
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 # Create your models here.
@@ -23,3 +23,34 @@
 # - Year (IntegerField) with min value 2015 and max value 2023
 # - Any other fields you would like to include in car model
 # - __str__ method to print a car make object
+
+
+
+class CarMake(models.Model):
+    name = models.CharField(max_length=100)  # e.g., "Nissan"
+    description = models.TextField()  # e.g., "Great cars. Japanese technology"
+    # Add any other fields if desired, e.g., country = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.name  # Prints the car make name
+
+class CarModel(models.Model):
+    # Choices for car types
+    SEDAN = 'Sedan'
+    SUV = 'SUV'
+    WAGON = 'Wagon'
+    TYPE_CHOICES = [
+        (SEDAN, 'Sedan'),
+        (SUV, 'SUV'),
+        (WAGON, 'Wagon'),
+    ]
+
+    car_make = models.ForeignKey(CarMake, on_delete=models.CASCADE)  # Many-to-one relationship
+    dealer_id = models.IntegerField()  # Refers to a dealer ID from Cloudant database
+    name = models.CharField(max_length=100)  # e.g., "Pathfinder"
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES)  # Limited choices
+    year = models.DateField()  # e.g., 2023-01-01
+    # Add any other fields if desired, e.g., price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.car_make.name} - {self.name}"  # Prints "Nissan - Pathfinder"
