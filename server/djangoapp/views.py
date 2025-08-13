@@ -12,7 +12,10 @@ import logging
 import json
 from django.views.decorators.csrf import csrf_exempt
 from .populate import initiate
-from .models import CarMake, CarModel
+from .models import CarMake, CarModel, Dealership
+from .populate import initiate
+from django.conf import settings
+import requests
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -74,21 +77,33 @@ def registration(request):
     else :
         data = {"userName":username,"error":"Already Registered"}
         return JsonResponse(data)
-
 def get_cars(request):
-    count = CarMake.objects.filter().count()
-    print(count)
-    if(count == 0):
-        initiate()
-    car_models = CarModel.objects.select_related('car_make')
-    cars = []
-    for car_model in car_models:
-        cars.append({"CarModel": car_model.name, "CarMake": car_model.car_make.name})
-    return JsonResponse({"CarModels":cars})       
+    try:
+        count = CarMake.objects.filter().count()
+        print(f"CarMake count: {count}")
+        if count == 0:
+            print("Calling initiate() to populate database")
+            initiate()
+        car_models = CarModel.objects.select_related('car_make')
+        print(f"CarModel count: {CarModel.objects.count()}")
+        cars = []
+        for car_model in car_models:
+            cars.append({"CarModel": car_model.name, "CarMake": car_model.car_make.name})
+        return JsonResponse({"CarModels": cars})
+    except Exception as e:
+        print(f"Error in get_cars: {str(e)}")
+        return JsonResponse({"error": str(e)}, status=500)
 # Update the `get_dealerships` view to render the index page with
 # a list of dealerships
-# def get_dealerships(request):
-# ...
+@csrf_exempt
+def get_dealerships(request):
+    try:
+        dealers = Dealership.objects.all().values('id', 'name', 'address', 'city', 'state', 'zip_code', 'phone')
+        print(f"Found {len(list(dealers))} dealers")  # Debug print
+        return JsonResponse({"dealers": list(dealers)})
+    except Exception as e:
+        print(f"Error in get_dealerships: {str(e)}")  # Debug print
+        return JsonResponse({"error": str(e)}, status=500)
 
 # Create a `get_dealer_reviews` view to render the reviews of a dealer
 # def get_dealer_reviews(request, dealer_id):
